@@ -26,6 +26,7 @@ clean:
 	rm $(GLM) ./a.out
 
 install-GL:
+	sudo apt-get update
 	sudo apt-get install -y build-essential make g++-5 libgl1-mesa-dev freeglut3 freeglut3-dev libglew-dev libpng16*
 
 download-objs:
