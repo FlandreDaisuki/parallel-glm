@@ -33,7 +33,7 @@ download-objs:
 	curl -sS http://graphics.cs.williams.edu/data/meshes/buddha.zip > buddha.zip
 	curl -sS http://graphics.cs.williams.edu/data/meshes/sibenik.zip > sibenik.zip
 	curl -sS http://graphics.cs.williams.edu/data/meshes/crytek-sponza.zip > sponza.zip
-	ls *.zip | awk -F'.zip' '{print "unzip "$0" -d "$1}' | sh
+	ls *.zip | awk -F'.zip' '{print "unzip "$$0" -d "$$1}' | sh
 	rm *.zip
 
 glinfo:
