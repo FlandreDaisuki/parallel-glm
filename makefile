@@ -36,6 +36,7 @@ download-objs:
 	curl -sS http://graphics.cs.williams.edu/data/meshes/crytek-sponza.zip > sponza.zip
 	ls *.zip | awk -F'.zip' '{print "unzip "$$0" -d "$$1}' | sh
 	rm *.zip
+	find . -type f -name "*.mtl" -exec sed -i 's/\\/\//g' {} +
 
 glinfo:
 	glxinfo | grep OpenGL > glinfo.txt
