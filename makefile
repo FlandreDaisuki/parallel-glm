@@ -19,6 +19,9 @@ obj-sponza: build
 build:
 	$(CC) $(SOURCE) $(LIBS)
 
+build-gdb:
+	$(CC) $(SOURCE) $(LIBS) -g
+
 %.o: glm/%.c
 	$(CC) -c -o $@ $<
 
