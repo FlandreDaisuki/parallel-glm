@@ -1,0 +1,32 @@
+1First pass finished
+2model->numvertices: 153635
+3model->numnormals: 147510
+4model->numtexcoords: 91964
+5model->numtriangles: 262267
+
+
+
+9pathname: sponza/sponza.obj
+10mtllibname: sponza.mtl
+
+
+
+
+15position: (0.000, 0.000, 0.000)
+
+17numvertices: 153635
+18numnormals: 192146
+19numtexcoords: 91964
+20numfacetnorms: 262267
+21numtriangles: 262267
+22nummaterials: 27
+23  material name:   default
+  material map_Kd(texture)     index in model: 4294967295
+  material shininess: 65.000
+
+  material name: leaf
+  material map_Kd(texture) index in model: 0
+  material shininess: 12.800
+
+
+$
