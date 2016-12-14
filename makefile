@@ -1,5 +1,5 @@
 CC = gcc
-LIBS = -lGL -lGLU -lGLEW -lglut -lm -lpng
+LIBS = -lGL -lGLU -lGLEW -lglut -lm -lpng -lpthread
 SOURCE = main.c glm/glm.c glm/glmimg_png.c glm/glmimg.c glm/glm_util.c glm_helper.c
 
 all: obj-buddha clean
