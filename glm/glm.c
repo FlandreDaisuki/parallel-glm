@@ -49,6 +49,28 @@ typedef struct _GLMnode {
     struct _GLMnode* next;
 } GLMnode;
 
+void trimStr(char *str)
+{
+    char tmp[128];
+    strcpy(tmp, str);
+    /* trim front */
+    while(tmp[0] == ' '){
+        strcpy(tmp, tmp+1);
+    }
+
+    /* trim last */
+    size_t lstr = strlen(tmp);
+    for(int i = lstr - 1 ; i >= 0 ; --i) {
+        char a = tmp[i];
+        if(a == '\r' || a == '\n' || a == ' ') {
+            tmp[i] = 0;
+        } else {
+            break;
+        }
+    }
+    strcpy(str, tmp);
+}
+
 /* glmMax: returns the maximum of two floats */
 static GLfloat
 glmMax(GLfloat a, GLfloat b)
@@ -199,7 +221,7 @@ glmFindGroup(GLMmodel* model, char* name)
 static GLMgroup*
 glmAddGroup(GLMmodel* model, char* name)
 {
-    GLMgroup* group;
+    GLMgroup *group, *lastgroup;
 
     group = glmFindGroup(model, name);
     if (!group) {
@@ -208,8 +230,17 @@ glmAddGroup(GLMmodel* model, char* name)
         group->material = 0;
         group->numtriangles = 0;
         group->triangles = NULL;
-        group->next = model->groups;
-        model->groups = group;
+        group->next = NULL;
+        lastgroup = model->groups;
+        if(lastgroup == NULL) {
+            model->groups = group;
+        } else {
+            while(lastgroup->next) {
+                lastgroup = lastgroup->next;
+            }
+            lastgroup->next = group;
+        }
+
         model->numgroups++;
     }
 
@@ -585,9 +616,7 @@ void *firstpassWorker(void *threadarg)
     }
     while(fgets(buf, sizeof(buf), fp)) {
 
-        if(buf[strlen(buf)-1] == '\n') {
-            buf[strlen(buf)-1] = '\0';
-        }
+        trimStr(buf);
 
         switch (buf[0]) {
             case '#':               /* nothing to do */
@@ -684,38 +713,30 @@ glmFirstPass(GLMmodel* model, FILE* file)
         GLMgroup* group;
         group = glmAddGroup(model, "default");
         char buf[128];
-        char rest[128];
+        char tmp[128];
         unsigned    v, n, t;
-        while (fscanf(file, "%s", buf) != EOF) {
-         switch (buf[0]) {
-             case 'g':
-             fgets(buf, sizeof(buf), file);
-             buf[strlen(buf) - 1] = '\0';
-             group = glmAddGroup(model, buf);
-             break;
-             case 'f': {
-                char tmp[128];
-                int count=0;
-                char *str, *save;
-                fgets(buf, sizeof(buf), file);
-
-                if(buf[strlen(buf)-1] == '\n') {
-                    buf[strlen(buf)-1] = '\0';
+        while (fgets(buf, sizeof(buf), file)) {
+            trimStr(buf);
+            switch (buf[0]) {
+                case 'g':
+                    sscanf(buf, "%*s %s", tmp);
+                    group = glmAddGroup(model, tmp);
+                break;
+                case 'f': {
+                    int count = -1;
+                    char *str, *save;
+                    strcpy(tmp, buf);
+                    str = strtok(tmp, " ");
+                    while(str != NULL){
+                        str = strtok(NULL, " ");
+                        count++;
+                    }
+                    group->numtriangles += (count - 2);
+                    break;
                 }
-
-                strcpy(tmp, buf);
-                str = strtok(tmp, " ");
-                while(str != NULL){
-                    str = strtok(NULL, " ");
-                    count++;
-                }
-                group->numtriangles += (count - 2);
+                default:
                 break;
             }
-         default:
-             fgets(buf, sizeof(buf), file);
-             break;
-         }
         }
 
         group = model->groups;
@@ -764,9 +785,7 @@ void *secondpassWorker(void *threadarg)
 
     while(fgets(buf, sizeof(buf), fp)) {
 
-        if(buf[strlen(buf)-1] == '\n') {
-            buf[strlen(buf)-1] = '\0';
-        }
+        trimStr(buf);
 
         if(strncmp(buf, "v ", 2) == 0 && arg->id == 0) {
             sscanf(buf, "%*s %f %f %f"  , &model->vertices[3 * vi + 0]
@@ -833,6 +852,7 @@ glmSecondPass(GLMmodel* model, FILE* file)
     numtriangles = 0;
     material = 0;
     while (fscanf(file, "%s", buf) != EOF) {
+        trimStr(buf);
         switch (buf[0]) {
         case '#':               /* comment */
             /* eat up rest of line */
@@ -849,15 +869,16 @@ glmSecondPass(GLMmodel* model, FILE* file)
             group->material = material;
 #endif
             break;
-        case 'g':               /* group */
+        case 'g':{              /* group */
             /* eat up rest of line */
             fgets(buf, sizeof(buf), file);
-            buf[strlen(buf) - 1] = '\0'; /* nuke '\n' */
+            trimStr(buf);
             group = glmFindGroup(model, buf);
 #ifndef MATERIAL_BY_FACE
             group->material = material;
 #endif
             break;
+        }
         case 'f':               /* face */
             v = n = t = 0;
             T(numtriangles).findex = -1;
