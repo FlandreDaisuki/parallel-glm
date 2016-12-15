@@ -1704,10 +1704,6 @@ glmReadOBJ(const char* filename)
     /* facet normals are not in the file, we have to compute them anyway */
     glmFacetNormals(model);
 
-    /***********************************/
-    exit(1);
-    /***********************************/
-
     /* verify the indices */
     for (i = 0; i < model->numtriangles; i++) {
         if (T(i).findex != -1)
