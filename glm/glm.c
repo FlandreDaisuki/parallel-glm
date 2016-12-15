@@ -466,7 +466,7 @@ glmReadMTL(GLMmodel* model, char* name)
             break;
         case 'm':
             /* texture map */
-            tex_filename = malloc(FILENAME_MAX);
+            tex_filename = (char*)malloc(FILENAME_MAX);
             fgets(tex_filename, FILENAME_MAX, file);
             t_filename = __glmStrStrip(tex_filename);
             free(tex_filename);
