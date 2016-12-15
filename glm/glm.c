@@ -755,12 +755,11 @@ void *secondpassWorker(void *threadarg)
     secondArg *arg = (secondArg *)threadarg;
     GLMmodel *model = arg->model;
     char buf[128];
-    char rest[128];
 
     int vi = 1,
         ti = 1,
         ni = 1;
-    
+
     FILE *fp = fopen(arg->filename, "r");
 
     while(fgets(buf, sizeof(buf), fp)) {
@@ -773,7 +772,7 @@ void *secondpassWorker(void *threadarg)
             sscanf(buf, "%*s %f %f %f"  , &model->vertices[3 * vi + 0]
                                         , &model->vertices[3 * vi + 1]
                                         , &model->vertices[3 * vi + 2]);
-            ++vi; 
+            ++vi;
         } else if(strncmp(buf, "vt", 2) == 0 && arg->id == 1) {
             sscanf(buf, "%*s %f %f" , &model->texcoords[2 * ti + 0]
                                     , &model->texcoords[2 * ti + 1]);
@@ -1187,26 +1186,23 @@ glmReverseWinding(GLMmodel* model)
  *
  * model - initialized GLMmodel structure
  */
-GLvoid
-glmFacetNormals(GLMmodel* model)
+
+typedef struct _fnorm_arg
 {
-    GLuint  i;
+    GLMmodel* model;
+    int id;
+} fnormalArg;
+
+fnormalArg fnormal_args[THREAD_COUNT];
+void * facenormalWorker(void *threadarg)
+{
+    fnormalArg *arg = (fnormalArg *)threadarg;
+    int i;
     GLfloat u[3];
     GLfloat v[3];
+    GLMmodel* model = arg->model;
 
-    assert(model);
-    assert(model->vertices);
-
-    /* clobber any old facetnormals */
-    if (model->facetnorms) {
-        free(model->facetnorms);
-    }
-    /* allocate memory for the new facet normals */
-    model->numfacetnorms = model->numtriangles;
-    model->facetnorms = (GLfloat*)malloc(sizeof(GLfloat) *
-                                         3 * (model->numfacetnorms + 1));
-
-    for (i = 0; i < model->numtriangles; i++) {
+    for (i = arg->id; i < model->numtriangles; i+=THREAD_COUNT) {
         T(i).findex = i + 1;
 
         u[0] = model->vertices[3 * T(i).vindices[1] + 0] -
@@ -1226,7 +1222,42 @@ glmFacetNormals(GLMmodel* model)
         glmCross(u, v, &model->facetnorms[3 * (i + 1)]);
         glmNormalize(&model->facetnorms[3 * (i + 1)]);
     }
+}
 
+GLvoid
+glmFacetNormals(GLMmodel* model)
+{
+    assert(model);
+    assert(model->vertices);
+
+    /* clobber any old facetnormals */
+    if (model->facetnorms) {
+        free(model->facetnorms);
+    }
+    /* allocate memory for the new facet normals */
+    model->numfacetnorms = model->numtriangles;
+    model->facetnorms = (GLfloat*)malloc(sizeof(GLfloat) *
+                                         3 * (model->numfacetnorms + 1));
+
+    /************************************************************/
+    pthread_t *threads = (pthread_t *)malloc(sizeof(pthread_t) * THREAD_COUNT);
+    pthread_mutex_init(&mutex, NULL);
+    for (int i = 0; i < THREAD_COUNT; ++i)
+    {
+        fnormal_args[i].model = model;
+        fnormal_args[i].id = i;
+        if (pthread_create(&threads[i], NULL, facenormalWorker, (void *)&(fnormal_args[i])) != 0)
+        {
+            printf("pthread_create fail\n");
+        }
+    }
+    for (int i = 0; i < THREAD_COUNT; ++i)
+    {
+        pthread_join(threads[i], NULL);
+    }
+    pthread_mutex_destroy(&mutex);
+    free(threads);
+    /************************************************************/
 }
 
 /* glmVertexNormals: Generates smooth vertex normals for a model.
@@ -1672,6 +1703,10 @@ glmReadOBJ(const char* filename)
 
     /* facet normals are not in the file, we have to compute them anyway */
     glmFacetNormals(model);
+
+    /***********************************/
+    exit(1);
+    /***********************************/
 
     /* verify the indices */
     for (i = 0; i < model->numtriangles; i++) {
