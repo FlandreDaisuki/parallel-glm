@@ -39,8 +39,6 @@
 */
 #include "glmint.h"
 
-
-
 #define T(x) (model->triangles[(x)])
 #define THREAD_COUNT 4
 
@@ -50,8 +48,6 @@ typedef struct _GLMnode {
     GLboolean      averaged;
     struct _GLMnode* next;
 } GLMnode;
-
-
 
 /* glmMax: returns the maximum of two floats */
 static GLfloat
@@ -572,7 +568,6 @@ pthread_mutex_t mutex;
 
 firstArg first_args[THREAD_COUNT];
 
-
 void *firstpassWorker(void *threadarg)
 {
     firstArg *arg = (firstArg *)threadarg;
@@ -580,27 +575,26 @@ void *firstpassWorker(void *threadarg)
     GLuint n_normals = 0;
     GLuint n_texcoords = 0;
     GLuint n_triangles = 0;
-    int fuck=0;
 
     char buf[128];
     char rest[128];
 
     FILE *fp = fopen(arg->filename, "r");
-    for(int i = 0;i < arg->id ; ++i){
+    for(int i = 0;i < arg->id ; ++i) {
         fgets( rest, sizeof(rest), fp);
     }
-    while(fgets(buf, sizeof(buf), fp)){
+    while(fgets(buf, sizeof(buf), fp)) {
 
         if(buf[strlen(buf)-1] == '\n') {
             buf[strlen(buf)-1] = '\0';
         }
 
         switch (buf[0]) {
-            case '#'://nothing to do
+            case '#':               /* nothing to do */
                 break;
             case 'v':
                 switch (buf[1]) {
-                case ' ':          /* vertex */
+                case ' ':           /* vertex */
                     n_vertices++;
                     break;
                 case 'n':           /* normal */
@@ -614,17 +608,16 @@ void *firstpassWorker(void *threadarg)
                     break;
                 }
                 break;
-            case 'm':
+            case 'm':   /* mtllib */
                 sscanf(buf, "%s%s", rest, buf);
                 if (strncmp(rest, "mtllib", 6) != 0){
                     __glmFatalError("glmReadOBJ: Got \"%s\" instead of \"mtllib\"", buf);
                 }
                 arg->model->mtllibname = __glmStrStrip((char*)buf);
-                //glmReadMTL(model, model->mtllibname);
                 break;
-            case 'u': //usemtl
+            case 'u':   /* usemtl */
                 break;
-            case 'g': //group
+            case 'g':   /* group */
                 break;
             case 'f':{
                 char tmp[128];
@@ -633,16 +626,12 @@ void *firstpassWorker(void *threadarg)
                 int count = -1;
                 strcpy(tmp, buf);
                 str = strtok_r(tmp, " ", &save);
-                
+
                 while(str != NULL){
                     str = strtok_r(NULL, " ", &save);
                     count++;
                 }
                 n_triangles += count - 2;
-                if(fuck==0){
-                    printf("%d, %s\n", count, buf);
-                }
-                fuck++;
                 break;
             }
             default:
@@ -659,7 +648,7 @@ void *firstpassWorker(void *threadarg)
     arg->model->numtexcoords += n_texcoords;
     arg->model->numtriangles += n_triangles;
     pthread_mutex_unlock(&mutex);
-    
+
     pthread_exit(0);
 }
 
@@ -683,6 +672,7 @@ glmFirstPass(GLMmodel* model, FILE* file)
 	    	pthread_join(threads[i], NULL);
         }
         pthread_mutex_destroy(&mutex);
+        free(threads);
 
 
         printf("mtl_name : %s \n", model->mtllibname);
@@ -690,7 +680,7 @@ glmFirstPass(GLMmodel* model, FILE* file)
             glmReadMTL(model, model->mtllibname);
         }
         printf("mtl_finish\n");
-        
+
         GLMgroup* group;
         group = glmAddGroup(model, "default");
         char buf[128];
@@ -698,35 +688,30 @@ glmFirstPass(GLMmodel* model, FILE* file)
         unsigned    v, n, t;
         while (fscanf(file, "%s", buf) != EOF) {
          switch (buf[0]) {
-             case 'g':               
+             case 'g':
              fgets(buf, sizeof(buf), file);
- #if SINGLE_STRING_GROUP_NAMES
-             sscanf(buf, "%s", buf);
- #else
-             buf[strlen(buf) - 1] = '\0'; 
- #endif
+             buf[strlen(buf) - 1] = '\0';
              group = glmAddGroup(model, buf);
              break;
-             case 'f':{
+             case 'f': {
                 char tmp[128];
                 int count=0;
                 char *str, *save;
                 fgets(buf, sizeof(buf), file);
-                
+
                 if(buf[strlen(buf)-1] == '\n') {
                     buf[strlen(buf)-1] = '\0';
                 }
 
                 strcpy(tmp, buf);
-                str = strtok(tmp, " ");                  
+                str = strtok(tmp, " ");
                 while(str != NULL){
-                    //printf("## str=%s ###\n", str);
-                    str = strtok(NULL, " ");                   
+                    str = strtok(NULL, " ");
                     count++;
                 }
                 group->numtriangles += (count - 2);
                 break;
-            }                      
+            }
          default:
              fgets(buf, sizeof(buf), file);
              break;
@@ -754,16 +739,82 @@ glmFirstPass(GLMmodel* model, FILE* file)
  * model - properly initialized GLMmodel structure
  * file  - (fopen'd) file descriptor
  */
+#define V_VT_VN 3
+
+typedef struct _2nd_arg
+{
+    GLMmodel* model;
+    char filename[50];
+    int id;
+} secondArg;
+
+secondArg second_args[V_VT_VN];
+
+void *secondpassWorker(void *threadarg)
+{
+    secondArg *arg = (secondArg *)threadarg;
+    GLMmodel *model = arg->model;
+    char buf[128];
+    char rest[128];
+
+    int vi = 1,
+        ti = 1,
+        ni = 1;
+    
+    FILE *fp = fopen(arg->filename, "r");
+
+    while(fgets(buf, sizeof(buf), fp)) {
+
+        if(buf[strlen(buf)-1] == '\n') {
+            buf[strlen(buf)-1] = '\0';
+        }
+
+        if(strncmp(buf, "v ", 2) == 0 && arg->id == 0) {
+            sscanf(buf, "%*s %f %f %f"  , &model->vertices[3 * vi + 0]
+                                        , &model->vertices[3 * vi + 1]
+                                        , &model->vertices[3 * vi + 2]);
+            ++vi; 
+        } else if(strncmp(buf, "vt", 2) == 0 && arg->id == 1) {
+            sscanf(buf, "%*s %f %f" , &model->texcoords[2 * ti + 0]
+                                    , &model->texcoords[2 * ti + 1]);
+            ++ti;
+        } else if(strncmp(buf, "vn", 2) == 0 && arg->id == 2) {
+            sscanf(buf, "%*s %f %f %f"  , &model->normals[3 * ni + 0]
+                                        , &model->normals[3 * ni + 1]
+                                        , &model->normals[3 * ni + 2]);
+            ++ni;
+        } else {
+            // __glmFatalError("secondpassWorker[%d] \"%s\"\n", arg->id, buf);
+        }
+    } // end while
+}
+
 static GLvoid
 glmSecondPass(GLMmodel* model, FILE* file)
 {
-    GLuint  numvertices;        /* number of vertices in model */
-    GLuint  numnormals;         /* number of normals in model */
-    GLuint  numtexcoords;       /* number of texcoords in model */
+    pthread_t *threads = (pthread_t *)malloc(sizeof(pthread_t) * V_VT_VN);
+    pthread_mutex_init(&mutex, NULL);
+    for (int i = 0; i < V_VT_VN; ++i)
+    {
+        strcpy(second_args[i].filename, model->pathname);
+        second_args[i].model = model;
+        second_args[i].id = i;
+        if (pthread_create(&threads[i], NULL, secondpassWorker, (void *)&(second_args[i])) != 0)
+        {
+            printf("pthread_create fail\n");
+        }
+    }
+    for (int i = 0; i < V_VT_VN; ++i)
+    {
+        pthread_join(threads[i], NULL);
+    }
+    pthread_mutex_destroy(&mutex);
+    free(threads);
+    /************************************************************/
     GLuint  numtriangles;       /* number of triangles in model */
-    GLfloat*    vertices;           /* array of vertices  */
-    GLfloat*    normals;            /* array of normals */
-    GLfloat*    texcoords;          /* array of texture coordinates */
+    GLfloat*    vertices;       /* array of vertices  */
+    GLfloat*    normals;        /* array of normals */
+    GLfloat*    texcoords;      /* array of texture coordinates */
     GLMgroup* group;            /* current group pointer */
     GLuint  material;           /* current material */
     int v, n, t;
@@ -780,7 +831,6 @@ glmSecondPass(GLMmodel* model, FILE* file)
 
     /* on the second pass through the file, read all the data into the
     allocated arrays */
-    numvertices = numnormals = numtexcoords = 1;
     numtriangles = 0;
     material = 0;
     while (fscanf(file, "%s", buf) != EOF) {
@@ -788,30 +838,6 @@ glmSecondPass(GLMmodel* model, FILE* file)
         case '#':               /* comment */
             /* eat up rest of line */
             fgets(buf, sizeof(buf), file);
-            break;
-        case 'v':               /* v, vn, vt */
-            switch (buf[1]) {
-            case '\0':          /* vertex */
-                fscanf(file, "%f %f %f",
-                       &vertices[3 * numvertices + 0],
-                       &vertices[3 * numvertices + 1],
-                       &vertices[3 * numvertices + 2]);
-                numvertices++;
-                break;
-            case 'n':           /* normal */
-                fscanf(file, "%f %f %f",
-                       &normals[3 * numnormals + 0],
-                       &normals[3 * numnormals + 1],
-                       &normals[3 * numnormals + 2]);
-                numnormals++;
-                break;
-            case 't':           /* texcoord */
-                fscanf(file, "%f %f",
-                       &texcoords[2 * numtexcoords + 0],
-                       &texcoords[2 * numtexcoords + 1]);
-                numtexcoords++;
-                break;
-            }
             break;
         case 'u':
             fgets(buf, sizeof(buf), file);
@@ -827,11 +853,7 @@ glmSecondPass(GLMmodel* model, FILE* file)
         case 'g':               /* group */
             /* eat up rest of line */
             fgets(buf, sizeof(buf), file);
-// #if SINGLE_STRING_GROUP_NAMES
-//             sscanf(buf, "%s", buf);
-// #else
             buf[strlen(buf) - 1] = '\0'; /* nuke '\n' */
-// #endif
             group = glmFindGroup(model, buf);
 #ifndef MATERIAL_BY_FACE
             group->material = material;
@@ -983,15 +1005,6 @@ glmSecondPass(GLMmodel* model, FILE* file)
             break;
         }
     }
-
-#if 0
-    /* announce the memory requirements */
-    __glmWarning(" Memory: %d bytes",
-                 numvertices  * 3 * sizeof(GLfloat) +
-                 numnormals   * 3 * sizeof(GLfloat) * (numnormals ? 1 : 0) +
-                 numtexcoords * 3 * sizeof(GLfloat) * (numtexcoords ? 1 : 0) +
-                 numtriangles * sizeof(GLMtriangle));
-#endif
 }
 
 
