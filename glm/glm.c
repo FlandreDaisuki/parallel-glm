@@ -221,7 +221,7 @@ glmFindGroup(GLMmodel* model, char* name)
 static GLMgroup*
 glmAddGroup(GLMmodel* model, char* name)
 {
-    GLMgroup *group, *lastgroup;
+    GLMgroup *group, **headptr;
 
     group = glmFindGroup(model, name);
     if (!group) {
@@ -231,15 +231,12 @@ glmAddGroup(GLMmodel* model, char* name)
         group->numtriangles = 0;
         group->triangles = NULL;
         group->next = NULL;
-        lastgroup = model->groups;
-        if(lastgroup == NULL) {
-            model->groups = group;
-        } else {
-            while(lastgroup->next) {
-                lastgroup = lastgroup->next;
-            }
-            lastgroup->next = group;
+        
+        headptr = &(model->groups);
+        while(*headptr != NULL) {
+            headptr = &((*headptr)->next);
         }
+        *headptr = group;
 
         model->numgroups++;
     }
