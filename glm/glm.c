@@ -49,7 +49,7 @@ typedef struct _GLMnode {
     struct _GLMnode* next;
 } GLMnode;
 
-void trimStr(char *str)
+static void trimStr(char *str)
 {
     char tmp[128];
     strcpy(tmp, str);
@@ -714,7 +714,6 @@ glmFirstPass(GLMmodel* model, FILE* file)
         group = glmAddGroup(model, "default");
         char buf[128];
         char tmp[128];
-        unsigned    v, n, t;
         while (fgets(buf, sizeof(buf), file)) {
             trimStr(buf);
             switch (buf[0]) {
@@ -724,7 +723,7 @@ glmFirstPass(GLMmodel* model, FILE* file)
                 break;
                 case 'f': {
                     int count = -1;
-                    char *str, *save;
+                    char *str;
                     strcpy(tmp, buf);
                     str = strtok(tmp, " ");
                     while(str != NULL){
@@ -805,6 +804,8 @@ void *secondpassWorker(void *threadarg)
             // __glmFatalError("secondpassWorker[%d] \"%s\"\n", arg->id, buf);
         }
     } // end while
+
+    pthread_exit(0);
 }
 
 static GLvoid
@@ -830,9 +831,6 @@ glmSecondPass(GLMmodel* model, FILE* file)
     free(threads);
     /************************************************************/
     GLuint  numtriangles;       /* number of triangles in model */
-    GLfloat*    vertices;       /* array of vertices  */
-    GLfloat*    normals;        /* array of normals */
-    GLfloat*    texcoords;      /* array of texture coordinates */
     GLMgroup* group;            /* current group pointer */
     GLuint  material;           /* current material */
     int v, n, t;
@@ -842,9 +840,6 @@ glmSecondPass(GLMmodel* model, FILE* file)
     GLuint  nt_plus1 = model->numtexcoords + 1;
 
     /* set the pointer shortcuts */
-    vertices       = model->vertices;
-    normals    = model->normals;
-    texcoords    = model->texcoords;
     group      = model->groups;
 
     /* on the second pass through the file, read all the data into the
@@ -1243,6 +1238,8 @@ void * facenormalWorker(void *threadarg)
         glmCross(u, v, &model->facetnorms[3 * (i + 1)]);
         glmNormalize(&model->facetnorms[3 * (i + 1)]);
     }
+
+    pthread_exit(0);
 }
 
 GLvoid

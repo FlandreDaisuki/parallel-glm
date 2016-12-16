@@ -195,7 +195,6 @@ glmLoadTexture(const char *filename, GLboolean alpha, GLboolean repeat, GLboolea
     double xPow2, yPow2;
     int ixPow2, iyPow2;
     int xSize2, ySize2;
-    GLint retval;
 
     if(glm_do_init)
 	glmImgInit();
@@ -333,11 +332,6 @@ glmLoadTexture(const char *filename, GLboolean alpha, GLboolean repeat, GLboolea
 	rdata = (GLubyte*)malloc(sizeof(GLubyte) * xSize2 * ySize2 * pixelsize);
 	if (!rdata)
 	    return 0;
-	    
-	retval = gluScaleImage(type, width, height,
-			       GL_UNSIGNED_BYTE, data,
-			       xSize2, ySize2, GL_UNSIGNED_BYTE,
-			       rdata);
 
 	free(data);
 	data = rdata;
