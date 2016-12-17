@@ -821,6 +821,7 @@ void *secondFaceWorker(void *threadarg) {
             {
                 // not this thread job
                 modelTri += numFaceInLine - 2;
+                gi += numFaceInLine - 2;
             }
             else
             {
