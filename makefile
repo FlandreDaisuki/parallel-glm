@@ -20,7 +20,7 @@ build:
 	$(CC) $(SOURCE) $(LIBS)
 
 build-gdb:
-	$(CC) $(SOURCE) $(LIBS) -g
+	$(CC) $(SOURCE) $(LIBS) -g -Wall
 
 %.o: glm/%.c
 	$(CC) -c -o $@ $<
