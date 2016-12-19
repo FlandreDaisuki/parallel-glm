@@ -600,6 +600,10 @@ void *firstpassWorker(void *threadarg)
     char rest[128];
 
     FILE *fp = fopen(arg->filename, "r");
+    if (!fp) {
+        __glmFatalError( "firstpassWorker() failed: can't open file \"%s\".",
+                         arg->filename);
+    }
     for(int i = 0;i < arg->id ; ++i) {
         fgets( rest, sizeof(rest), fp);
     }
@@ -666,7 +670,7 @@ void *firstpassWorker(void *threadarg)
     arg->model->numtexcoords += n_texcoords;
     arg->model->numtriangles += n_triangles;
     pthread_mutex_unlock(&mutex);
-
+    fclose(fp);
     pthread_exit(0);
 }
 
@@ -758,6 +762,10 @@ void *secondVertexWorker(void *threadarg)
         ni = 1;
 
     FILE *fp = fopen(arg->filename, "r");
+    if (!fp) {
+        __glmFatalError( "secondVertexWorker() failed: can't open file \"%s\".",
+                         arg->filename);
+    }
 
     while(fgets(buf, sizeof(buf), fp)) {
 
@@ -781,16 +789,21 @@ void *secondVertexWorker(void *threadarg)
             // __glmFatalError("secondVertexWorker[%d] \"%s\"\n", arg->id, buf);
         }
     } // end while
-
+    fclose(fp);
     pthread_exit(0);
 }
 
-void *secondFaceWorker(void *threadarg) {
+void *secondFaceWorker(void *threadarg)
+{
     threadArgStruct *arg = (threadArgStruct *)threadarg;
     GLMmodel *model = arg->model;
 	GLMgroup *g = model->groups;
 	int id = arg->id;
 	FILE *fp = fopen(arg->filename, "r");
+    if (!fp) {
+        __glmFatalError( "secondFaceWorker() failed: can't open file \"%s\".",
+                         arg->filename);
+    }
 
     int v, t, n, mode;
     int nv_plus1 = model->numvertices + 1,
@@ -933,7 +946,7 @@ void *secondFaceWorker(void *threadarg) {
             linesOfF++;
         }
     }
-
+    fclose(fp);
     pthread_exit(0);
 }
 
