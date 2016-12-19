@@ -643,12 +643,10 @@ void *firstpassWorker(void *threadarg)
                 break;
             case 'f':{
                 char tmp[128];
-                char *str;
-                char *save;
+                char *str, *save;
                 int count = -1;
                 strcpy(tmp, buf);
                 str = strtok_r(tmp, " ", &save);
-
                 while(str != NULL){
                     str = strtok_r(NULL, " ", &save);
                     count++;
@@ -716,11 +714,11 @@ glmFirstPass(GLMmodel* model, FILE* file)
             break;
             case 'f': {
                 int count = -1;
-                char *str;
+                char *str, *save;
                 strcpy(tmp, buf);
-                str = strtok(tmp, " ");
+                str = strtok_r(tmp, " ", &save);
                 while(str != NULL){
-                    str = strtok(NULL, " ");
+                    str = strtok_r(NULL, " ", &save);
                     count++;
                 }
                 group->numtriangles += (count - 2);
