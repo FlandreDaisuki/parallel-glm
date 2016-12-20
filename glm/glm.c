@@ -695,11 +695,9 @@ glmFirstPass(GLMmodel* model, FILE* file)
     pthread_mutex_destroy(&mutex);
     free(threads);
     /****************************************************************/
-    printf("mtl_name : %s \n", model->mtllibname);
     if(model->mtllibname != NULL){
         glmReadMTL(model, model->mtllibname);
     }
-    printf("mtl_finish\n");
 
     GLMgroup* group;
     group = glmAddGroup(model, "default");
@@ -735,11 +733,11 @@ glmFirstPass(GLMmodel* model, FILE* file)
         group = group->next;
     }
 
-    printf("First pass finished\n");
-    printf("model->numvertices: %d\n", model->numvertices);
-    printf("model->numnormals: %d\n", model->numnormals);
-    printf("model->numtexcoords: %d\n", model->numtexcoords);
-    printf("model->numtriangles: %d\n", model->numtriangles);
+    // printf("First pass finished\n");
+    // printf("model->numvertices: %d\n", model->numvertices);
+    // printf("model->numnormals: %d\n", model->numnormals);
+    // printf("model->numtexcoords: %d\n", model->numtexcoords);
+    // printf("model->numtriangles: %d\n", model->numtriangles);
 }
 
 /* glmSecondPass: second pass at a Wavefront OBJ file that gets all

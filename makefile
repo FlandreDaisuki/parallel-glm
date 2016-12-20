@@ -1,36 +1,67 @@
-CC = gcc
+SHELL := /bin/bash
+CC = clang
 LIBS = -lGL -lGLU -lGLEW -lglut -lm -lpng -lpthread
 SOURCE = main.c glm/glm.c glm/glmimg_png.c glm/glmimg.c glm/glm_util.c glm_helper.c
+OUTNAME = ./a.out
 
 all: obj-buddha clean
 
 obj-rungholt: build
-	./a.out rungholt/rungholt.obj 2>/dev/null
+	$(OUTNAME) rungholt/rungholt.obj 2>/dev/null
 
 obj-buddha: build
-	./a.out buddha/buddha.obj 2>/dev/null
+	$(OUTNAME) buddha/buddha.obj 2>/dev/null
 
 obj-sibenik: build
-	./a.out sibenik/sibenik.obj 2>/dev/null
+	$(OUTNAME) sibenik/sibenik.obj 2>/dev/null
 
 obj-sponza: build
-	./a.out sponza/sponza.obj 2>/dev/null
+	$(OUTNAME) sponza/sponza.obj 2>/dev/null
+
+time-rungholt: build
+	time $(OUTNAME) rungholt/rungholt.obj -t 2>/dev/null
+
+time-buddha: build
+	time $(OUTNAME) buddha/buddha.obj -t 2>/dev/null
+
+time-sibenik: build
+	time $(OUTNAME) sibenik/sibenik.obj -t 2>/dev/null
+
+time-sponza: build
+	time $(OUTNAME) sponza/sponza.obj -t 2>/dev/null
+
+perf-rungholt: build
+	perf record $(OUTNAME) rungholt/rungholt.obj -t 2>/dev/null
+	perf report
+
+perf-buddha: build
+	perf record $(OUTNAME) buddha/buddha.obj -t 2>/dev/null
+	perf report
+
+perf-sibenik: build
+	perf record $(OUTNAME) sibenik/sibenik.obj -t 2>/dev/null
+	perf report
+
+perf-sponza: build
+	perf record $(OUTNAME) sponza/sponza.obj -t 2>/dev/null
+	perf report
 
 build:
-	$(CC) $(SOURCE) $(LIBS)
+	$(CC) $(SOURCE) $(LIBS) -O2 -o $(OUTNAME)
 
 build-gdb:
-	$(CC) $(SOURCE) $(LIBS) -g -Wall
+	$(CC) $(SOURCE) $(LIBS) -g -Wall -o $(OUTNAME)
 
 %.o: glm/%.c
 	$(CC) -c -o $@ $<
 
 clean:
-	rm $(GLM) ./a.out
+	rm $(GLM) $(OUTNAME)
 
 install-GL:
 	sudo apt-get update
 	sudo apt-get install -y build-essential make g++-5 libgl1-mesa-dev freeglut3 freeglut3-dev libglew-dev libpng16*
+	sudo apt-get install -y linux-tools-common
 
 download-objs:
 	curl -sS http://graphics.cs.williams.edu/data/meshes/rungholt.zip > rungholt.zip
