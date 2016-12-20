@@ -11,3 +11,9 @@ $ make download-objs install-GL
 ```
 $ make obj-[tab][tab]
 ```
+
+## Time
+```
+$ make time-[tab][tab]
+$ make time-[tab][tab] THR=8
+```

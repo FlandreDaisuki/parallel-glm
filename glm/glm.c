@@ -40,7 +40,9 @@
 #include "glmint.h"
 
 #define T(x) (model->triangles[(x)])
+#ifndef THREAD_COUNT
 #define THREAD_COUNT 4
+#endif
 #define THREE 3
 
 pthread_mutex_t mutex;

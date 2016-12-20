@@ -3,6 +3,7 @@ CC = clang
 LIBS = -lGL -lGLU -lGLEW -lglut -lm -lpng -lpthread
 SOURCE = main.c glm/glm.c glm/glmimg_png.c glm/glmimg.c glm/glm_util.c glm_helper.c
 OUTNAME = ./a.out
+THR = 4
 
 all: obj-buddha clean
 
@@ -18,36 +19,39 @@ obj-sibenik: build
 obj-sponza: build
 	$(OUTNAME) sponza/sponza.obj 2>/dev/null
 
-time-rungholt: build
+time-rungholt: build-noinfo
 	time $(OUTNAME) rungholt/rungholt.obj -t 2>/dev/null
 
-time-buddha: build
+time-buddha: build-noinfo
 	time $(OUTNAME) buddha/buddha.obj -t 2>/dev/null
 
-time-sibenik: build
+time-sibenik: build-noinfo
 	time $(OUTNAME) sibenik/sibenik.obj -t 2>/dev/null
 
-time-sponza: build
+time-sponza: build-noinfo
 	time $(OUTNAME) sponza/sponza.obj -t 2>/dev/null
 
-perf-rungholt: build
+perf-rungholt: build-noinfo
 	perf record $(OUTNAME) rungholt/rungholt.obj -t 2>/dev/null
 	perf report
 
-perf-buddha: build
+perf-buddha: build-noinfo
 	perf record $(OUTNAME) buddha/buddha.obj -t 2>/dev/null
 	perf report
 
-perf-sibenik: build
+perf-sibenik: build-noinfo
 	perf record $(OUTNAME) sibenik/sibenik.obj -t 2>/dev/null
 	perf report
 
-perf-sponza: build
+perf-sponza: build-noinfo
 	perf record $(OUTNAME) sponza/sponza.obj -t 2>/dev/null
 	perf report
 
 build:
-	$(CC) $(SOURCE) $(LIBS) -O2 -o $(OUTNAME)
+	$(CC) $(SOURCE) $(LIBS) -O2 -D THREAD_COUNT = $(THR) -o $(OUTNAME)
+
+build-noinfo:
+	$(CC) $(SOURCE) $(LIBS) -O2 -D RETURN_AFTER_INIT -D "THREAD_COUNT = $(THR)" -o $(OUTNAME)
 
 build-gdb:
 	$(CC) $(SOURCE) $(LIBS) -g -Wall -o $(OUTNAME)
@@ -60,7 +64,7 @@ clean:
 
 install-GL:
 	sudo apt-get update
-	sudo apt-get install -y build-essential make g++-5 libgl1-mesa-dev freeglut3 freeglut3-dev libglew-dev libpng16*
+	sudo apt-get install -y build-essential make g++-5 clang libgl1-mesa-dev freeglut3 freeglut3-dev libglew-dev libpng16*
 	sudo apt-get install -y linux-tools-common
 
 download-objs:

@@ -19,13 +19,6 @@ float eye[] = {0.0, 3.0, 1.2};
 float delta = 0.0;
 char namebuf[150] = {0};
 
-int RETURN_AFTER_INIT = 0;
-/* usage:
- * 		./a.out objpath [options]
- * 
- * options:
- * 		-t : return after init()
- */
 int main(int argc, char *argv[])
 {
 	glutInit(&argc, argv);
@@ -34,19 +27,12 @@ int main(int argc, char *argv[])
 	glutCreateWindow(argv[1]);
 	strcpy(namebuf, argv[1]);
 	glutReshapeWindow(720, 720);
-	for(int i=1; i<argc;++i) {
-		char *arg = argv[i];
-		if(arg[0] == '-' && arg[1] =='t') {
-			RETURN_AFTER_INIT = 1;
-		}
-	}
 	glewInit();
 
 	init();
-	if(RETURN_AFTER_INIT)
-	{
-		return 0;
-	}
+#ifdef RETURN_AFTER_INIT
+	return 0;
+#endif
 	glutReshapeFunc(reshape);
 	glutDisplayFunc(display);
 	glutIdleFunc(idle);
@@ -69,10 +55,9 @@ void init(void) {
 	glmFacetNormals(objModel);
 	glmVertexNormals(objModel, 90.0, GL_FALSE);
 	
-	if(RETURN_AFTER_INIT == 0)
-	{
-		print_model_info(objModel);
-	}
+#ifndef RETURN_AFTER_INIT
+	print_model_info(objModel);
+#endif
 }
 
 void display(void)
