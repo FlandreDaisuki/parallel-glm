@@ -48,7 +48,7 @@ perf-sponza: build-noinfo
 	perf report
 
 build:
-	$(CC) $(SOURCE) $(LIBS) -O2 -D THREAD_COUNT = $(THR) -o $(OUTNAME)
+	$(CC) $(SOURCE) $(LIBS) -O2 -D "THREAD_COUNT = $(THR)" -o $(OUTNAME)
 
 build-noinfo:
 	$(CC) $(SOURCE) $(LIBS) -O2 -D RETURN_AFTER_INIT -D "THREAD_COUNT = $(THR)" -o $(OUTNAME)
