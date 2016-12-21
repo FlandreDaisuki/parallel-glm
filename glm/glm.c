@@ -27,6 +27,7 @@
 #endif
 
 #include <math.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -85,6 +86,63 @@ inline static void trimStr(char *str)
     }
     t[1] = '\0';
     strcpy(str, h);
+}
+
+inline static void get2int(char *buf, int *a, int *b) {
+    char *x = buf;
+    int sign = 1;
+    int t = 0;
+    int ans[2];
+    for(int i=0;i<2;++i) {
+        while(!isdigit(*x) && *x != '-' && *x != '\0')
+        {
+            ++x;
+        }
+        if(*x == '-')
+        {
+            sign = -1;
+            ++x;
+        }
+        while(isdigit(*x)) {
+            t*=10;
+            t+=(*x-'0');
+            ++x;
+        }
+        ans[i] = t * sign;
+		t = 0;
+		sign = 1;
+    }
+	*a = ans[0];
+	*b = ans[1];
+}
+
+inline static void get3int(char *buf, int *a, int *b, int *c) {
+    char *x = buf;
+    int sign = 1;
+    int t = 0;
+    int ans[3];
+    for(int i=0;i<3;++i) {
+        while(!isdigit(*x) && *x != '-' && *x != '\0')
+        {
+            ++x;
+        }
+        if(*x == '-')
+        {
+            sign = -1;
+            ++x;
+        }
+        while(isdigit(*x)) {
+            t*=10;
+            t+=(*x-'0');
+            ++x;
+        }
+        ans[i] = t * sign;
+		t = 0;
+		sign = 1;
+    }
+	*a = ans[0];
+	*b = ans[1];
+	*c = ans[2];
 }
 
 /* glmMax: returns the maximum of two floats */
@@ -795,6 +853,31 @@ void *secondVertexWorker(void *threadarg)
     pthread_exit(0);
 }
 
+inline static int procFaceLine(char* buf, char strs[][128])
+{
+    char (*t)[128];
+	char *x, *h;
+	h = buf;
+	x = buf;
+	t = strs;
+    int ret = 0;
+	while(*x != '\r' && *x != '\n' && t < strs + 4)
+	{
+		while(*x != ' ' && *x != '\r' && *x != '\n') {
+			++x;
+		}
+		if(h != buf) {
+			memcpy(*t, h, sizeof(char) * (x-h));
+			(*t)[x-h] = '\0';
+			t += 1;
+            ++ret;
+		}
+		h = x + 1;
+		x = h;
+	}
+    return ret;
+}
+
 void *secondFaceWorker(void *threadarg)
 {
     threadArgStruct *arg = (threadArgStruct *)threadarg;
@@ -831,7 +914,7 @@ void *secondFaceWorker(void *threadarg)
     {
         if (buf[0] == 'f')
         {
-            int numFaceInLine = sscanf(buf, "%*s %s %s %s %s", tmp[0], tmp[1], tmp[2], tmp[3]);
+            int numFaceInLine = procFaceLine(buf, tmp);
             if (linesOfF % THREAD_COUNT != id)
             {
                 // not this thread job
@@ -851,7 +934,8 @@ void *secondFaceWorker(void *threadarg)
 #endif
                     for (int i = 0; i < 3; ++i)
                     {
-                        sscanf(tmp[i], "%d//%d", &v, &n);
+                        // sscanf(tmp[i], "%d//%d", &v, &n);
+                        get2int(tmp[i], &v, &n);
                         T(modelTri).vindices[i] = (v > 0) ? v : v + nv_plus1;
                         T(modelTri).tindices[i] = -1;
                         T(modelTri).nindices[i] = (n > 0) ? n : n + nn_plus1;
@@ -867,7 +951,8 @@ void *secondFaceWorker(void *threadarg)
 #ifdef MATERIAL_BY_FACE
                         T(modelTri).material = g->material;
 #endif
-                        sscanf(tmp[3], "%d//%d", &v, &n);
+                        // sscanf(tmp[3], "%d//%d", &v, &n);
+                        get2int(tmp[3], &v, &n);
                         T(modelTri).vindices[0] = T(modelTri - 1).vindices[0];
                         T(modelTri).tindices[0] = T(modelTri - 1).tindices[0];
                         T(modelTri).nindices[0] = T(modelTri - 1).nindices[0];
@@ -893,7 +978,8 @@ void *secondFaceWorker(void *threadarg)
 #endif
                     for (int i = 0; i < 3; ++i)
                     {
-                        sscanf(tmp[i], "%d/%d/%d", &v, &t, &n);
+                        // sscanf(tmp[i], "%d/%d/%d", &v, &t, &n);
+                        get3int(tmp[i], &v, &t, &n);
                         T(modelTri).vindices[i] = (v > 0) ? v : v + nv_plus1;
                         T(modelTri).tindices[i] = (mode < 2) ? (-1) : ((t > 0) ? t : t + nt_plus1);
                         T(modelTri).nindices[i] = (mode < 3) ? (-1) : ((n > 0) ? n : n + nn_plus1);
@@ -909,7 +995,8 @@ void *secondFaceWorker(void *threadarg)
 #ifdef MATERIAL_BY_FACE
                         T(modelTri).material = g->material;
 #endif
-                        sscanf(tmp[3], "%d/%d/%d", &v, &t, &n);
+                        // sscanf(tmp[3], "%d/%d/%d", &v, &t, &n);
+                        get3int(tmp[3], &v, &t, &n);
                         T(modelTri).vindices[0] = T(modelTri - 1).vindices[0];
                         T(modelTri).tindices[0] = T(modelTri - 1).tindices[0];
                         T(modelTri).nindices[0] = T(modelTri - 1).nindices[0];
