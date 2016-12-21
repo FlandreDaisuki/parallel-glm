@@ -61,26 +61,30 @@ typedef struct _thread_arg
     int id;
 } threadArgStruct;
 
-static void trimStr(char *str)
+inline static void trimStr(char *str)
 {
     char tmp[128];
+    char *h, *t, *x; //head, tell, x
     strcpy(tmp, str);
+    x = tmp;
     /* trim front */
-    while(tmp[0] == ' '){
-        strcpy(tmp, tmp+1);
+    while (*x == ' ')
+    {
+        ++x;
     }
+    h = x;
 
     /* trim last */
-    size_t lstr = strlen(tmp);
-    for(int i = lstr - 1 ; i >= 0 ; --i) {
-        char a = tmp[i];
-        if(a == '\r' || a == '\n' || a == ' ') {
-            tmp[i] = 0;
-        } else {
-            break;
+    while (*x != '\0' && *x != '\r' && *x != '\n')
+    {
+        if (*x != ' ')
+        {
+            t = x;
         }
+        ++x;
     }
-    strcpy(str, tmp);
+    t[1] = '\0';
+    strcpy(str, h);
 }
 
 /* glmMax: returns the maximum of two floats */
