@@ -1,4 +1,4 @@
-# WavefrontOBJLoader
+# parallel-glm
 
 ## Install
 
