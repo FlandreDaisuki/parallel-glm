@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 CC = clang
-LIBS = -lGL -lGLU -lGLEW -lglut -lm -lpng -lpthread
+LIBS = -lGL -lGLU -lGLEW -lglut -lm -lpng
 SOURCE = main.c glm/glm.c glm/glmimg_png.c glm/glmimg.c glm/glm_util.c glm_helper.c
 OUTNAME = ./a.out
 THR = 4
@@ -48,10 +48,10 @@ perf-sponza: build-noinfo
 	perf report
 
 build:
-	$(CC) $(SOURCE) $(LIBS) -O2 -D THREAD_COUNT = $(THR) -o $(OUTNAME)
+	$(CC) $(SOURCE) $(LIBS) -O2 -o $(OUTNAME)
 
 build-noinfo:
-	$(CC) $(SOURCE) $(LIBS) -O2 -D RETURN_AFTER_INIT -D "THREAD_COUNT = $(THR)" -o $(OUTNAME)
+	$(CC) $(SOURCE) $(LIBS) -O2 -D RETURN_AFTER_INIT -o $(OUTNAME)
 
 build-gdb:
 	$(CC) $(SOURCE) $(LIBS) -g -Wall -o $(OUTNAME)
